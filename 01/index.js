@@ -5,14 +5,14 @@ d3.json("./orgChart.json").then(data => {
     .svgWidth(window.innerWidth)
     .svgHeight(window.innerHeight)
     .initialZoom(0.6)
-    .onNodeClick(d => console.log(d + " node clicked"))
+    .onNodeClick(d => console.log(`${d} node clicked`))
     .render();
 });
 
 function Chart() {
   // Exposed variables
-  var attrs = {
-    id: "ID" + Math.floor(Math.random() * 1000000), // Id for event handlings
+  const attrs = {
+    id: `ID${Math.floor(Math.random() * 1000000)}`, // Id for event handlings
     svgWidth: 800,
     svgHeight: 600,
     marginTop: 0,
@@ -34,26 +34,26 @@ function Chart() {
   };
 
   //InnerFunctions which will update visuals
-  var updateData;
+  let updateData;
 
   //Main chart object
-  var main = function() {
+  const main = () => {
     //Drawing containers
-    var container = d3.select(attrs.container);
-    var containerRect = container.node().getBoundingClientRect();
+    const container = d3.select(attrs.container);
+    const containerRect = container.node().getBoundingClientRect();
     if (containerRect.width > 0) attrs.svgWidth = containerRect.width;
 
     setDropShadowId(attrs);
 
     //Calculated properties
-    var calc = {
+    const calc = {
       id: null,
       chartTopMargin: null,
       chartLeftMargin: null,
       chartWidth: null,
       chartHeight: null
     };
-    calc.id = "ID" + Math.floor(Math.random() * 1000000); // id for event handlings
+    calc.id = `ID${Math.floor(Math.random() * 1000000)}`; // id for event handlings
     calc.chartLeftMargin = attrs.marginLeft;
     calc.chartTopMargin = attrs.marginTop;
     calc.chartWidth = attrs.svgWidth - attrs.marginRight - calc.chartLeftMargin;
@@ -86,12 +86,8 @@ function Chart() {
     //****************** ROOT node work ************************
     const root = d3
       .stratify()
-      .id(function(d) {
-        return d.nodeId;
-      })
-      .parentId(function(d) {
-        return d.parentNodeId;
-      })(attrs.data);
+      .id(d => d.nodeId)
+      .parentId(d => d.parentNodeId)(attrs.data);
 
     root.x0 = 0;
     root.y0 = 0;
@@ -109,7 +105,7 @@ function Chart() {
     root.children.forEach(expandSomeNodes);
 
     //Add svg
-    var svg = container
+    const svg = container
       .patternify({
         tag: "svg",
         selector: "svg-chart-container"
@@ -122,17 +118,17 @@ function Chart() {
       .style("background-color", attrs.backgroundColor);
 
     //Add container g element
-    var chart = svg
+    const chart = svg
       .patternify({
         tag: "g",
         selector: "chart"
       })
       .attr(
         "transform",
-        "translate(" + calc.chartLeftMargin + "," + calc.chartTopMargin + ")"
+        `translate(${calc.chartLeftMargin},${calc.chartTopMargin})`
       );
 
-    var centerG = chart
+    const centerG = chart
       .patternify({
         tag: "g",
         selector: "center-group"
@@ -160,7 +156,7 @@ function Chart() {
       selector: "filter-defs"
     });
 
-    var filter = filterDefs
+    const filter = filterDefs
       .patternify({ tag: "filter", selector: "shadow-filter-element" })
       .attr("id", attrs.dropShadowId)
       .attr("y", `${-50}%`)
@@ -200,7 +196,7 @@ function Chart() {
       .attr("operator", "in")
       .attr("result", "offsetBlur");
 
-    var feMerge = filter.patternify({
+    const feMerge = filter.patternify({
       tag: "feMerge",
       selector: "feMerge-element"
     });
@@ -217,13 +213,13 @@ function Chart() {
     update(root);
 
     // Smoothly handle data updating
-    updateData = function() {};
+    updateData = () => {};
 
     //#########################################  UTIL FUNCS ##################################
     function setDropShadowId(d) {
       if (d.dropShadowId) return;
 
-      let id = d.id + "-drop-shadow";
+      let id = `${d.id}-drop-shadow`;
       //@ts-ignore
       if (typeof DOM != "undefined") {
         //@ts-ignore
@@ -240,7 +236,7 @@ function Chart() {
 
     // Zoom handler func
     function zoomed() {
-      var transform = d3.event.transform;
+      const transform = d3.event.transform;
       attrs.lastTransform = transform;
       chart.attr("transform", transform);
     }
@@ -432,19 +428,17 @@ function Chart() {
       // --------------------------  LINKS ----------------------
 
       // Update the links...
-      var linkSelection = centerG
+      const linkSelection = centerG
         .selectAll("path.link")
-        .data(links, function(d) {
-          return d.id;
-        });
+        .data(links, d => d.id);
 
       // Enter any new links at the parent's previous position.
-      var linkEnter = linkSelection
+      const linkEnter = linkSelection
         .enter()
         .insert("path", "g")
         .attr("class", "link")
-        .attr("d", function(d) {
-          var o = {
+        .attr("d", d => {
+          const o = {
             x: source.x0,
             y: source.y0
           };
@@ -452,7 +446,7 @@ function Chart() {
         });
 
       // UPDATE
-      var linkUpdate = linkEnter.merge(linkSelection);
+      const linkUpdate = linkEnter.merge(linkSelection);
 
       // Styling links
       linkUpdate
@@ -475,17 +469,15 @@ function Chart() {
       linkUpdate
         .transition()
         .duration(attrs.duration)
-        .attr("d", function(d) {
-          return diagonal(d, d.parent);
-        });
+        .attr("d", d => diagonal(d, d.parent));
 
       // Remove any exiting links
-      var linkExit = linkSelection
+      const linkExit = linkSelection
         .exit()
         .transition()
         .duration(attrs.duration)
-        .attr("d", function(d) {
-          var o = {
+        .attr("d", d => {
+          const o = {
             x: source.x,
             y: source.y
           };
@@ -498,15 +490,13 @@ function Chart() {
       const nodesSelection = centerG.selectAll("g.node").data(nodes, d => d.id);
 
       // Enter any new nodes at the parent's previous position.
-      var nodeEnter = nodesSelection
+      const nodeEnter = nodesSelection
         .enter()
         .append("g")
         .attr("class", "node")
-        .attr("transform", function(d) {
-          return "translate(" + source.x0 + "," + source.y0 + ")";
-        })
+        .attr("transform", d => `translate(${source.x0},${source.y0})`)
         .attr("cursor", "pointer")
-        .on("click", function(d) {
+        .on("click", d => {
           if (
             [...d3.event.srcElement.classList].includes("node-button-circle")
           ) {
@@ -524,9 +514,7 @@ function Chart() {
         })
         .attr("width", 1e-6)
         .attr("height", 1e-6)
-        .style("fill", function(d) {
-          return d._children ? "lightsteelblue" : "#fff";
-        });
+        .style("fill", d => (d._children ? "lightsteelblue" : "#fff"));
 
       // Add foreignObject element
       const fo = nodeEnter
@@ -546,8 +534,8 @@ function Chart() {
         selector: "node-foreign-object-div",
         data: d => [d]
       })
-        .style("width", d => d.width + "px")
-        .style("height", d => d.height + "px")
+        .style("width", d => `${d.width}px`)
+        .style("height", d => `${d.height}px`)
         .style("color", "white")
         .html(d => d.data.template);
 
@@ -573,7 +561,7 @@ function Chart() {
         .attr("x", d => -d.width / 2 + 7)
         .attr("y", d => d.height / 2 - d.data.nodeIcon.size - 5)
         //.attr('text-anchor','middle')
-        .text(d => d.data.totalSubordinates + " Subordinates")
+        .text(d => `${d.data.totalSubordinates} Subordinates`)
         .attr("fill", attrs.nodeTextFill)
         .attr("font-weight", "bold");
 
@@ -586,7 +574,7 @@ function Chart() {
         .text("test")
         .attr("x", d => -d.width / 2 + 10 + d.data.nodeIcon.size)
         .attr("y", d => d.height / 2 - 10)
-        .text(d => d.data.directSubordinates + " Direct ")
+        .text(d => `${d.data.directSubordinates} Direct `)
         .attr("fill", attrs.nodeTextFill)
         .attr("font-weight", "bold");
 
@@ -630,7 +618,7 @@ function Chart() {
         .attr("pointer-events", "none");
 
       // Node update styles
-      var nodeUpdate = nodeEnter
+      const nodeUpdate = nodeEnter
         .merge(nodesSelection)
         .style("font", "12px sans-serif");
 
@@ -639,9 +627,7 @@ function Chart() {
         .transition()
         .attr("opacity", 0)
         .duration(attrs.duration)
-        .attr("transform", function(d) {
-          return "translate(" + d.x + "," + d.y + ")";
-        })
+        .attr("transform", d => `translate(${d.x},${d.y})`)
         .attr("opacity", 1);
 
       // Move images to desired positions
@@ -714,14 +700,12 @@ function Chart() {
 
       // Remove any exiting nodes
 
-      var nodeExitTransition = nodesSelection
+      const nodeExitTransition = nodesSelection
         .exit()
         .attr("opacity", 1)
         .transition()
         .duration(attrs.duration)
-        .attr("transform", function(d) {
-          return "translate(" + source.x + "," + source.y + ")";
-        })
+        .attr("transform", d => `translate(${source.x},${source.y})`)
         .on("end", function() {
           d3.select(this).remove();
         })
@@ -744,7 +728,7 @@ function Chart() {
         .attr("y", d => d.height / 2);
 
       // Store the old positions for transition.
-      nodes.forEach(function(d) {
+      nodes.forEach(d => {
         d.x0 = d.x;
         d.y0 = d.y;
       });
@@ -752,8 +736,8 @@ function Chart() {
       // debugger;
     }
 
-    d3.select(window).on("resize." + attrs.id, function() {
-      var containerRect = container.node().getBoundingClientRect();
+    d3.select(window).on(`resize.${attrs.id}`, () => {
+      const containerRect = container.node().getBoundingClientRect();
       //	if (containerRect.width > 0) attrs.svgWidth = containerRect.width;
       //	main();
     });
@@ -761,13 +745,13 @@ function Chart() {
 
   //----------- PROTOTYPE FUNCTIONS  ----------------------
   d3.selection.prototype.patternify = function(params) {
-    var container = this;
-    var selector = params.selector;
-    var elementTag = params.tag;
-    var data = params.data || [selector];
+    const container = this;
+    const selector = params.selector;
+    const elementTag = params.tag;
+    const data = params.data || [selector];
 
     // Pattern in action
-    var selection = container.selectAll("." + selector).data(data, (d, i) => {
+    let selection = container.selectAll(`.${selector}`).data(data, (d, i) => {
       if (typeof d === "object") {
         if (d.id) {
           return d.id;
@@ -789,7 +773,7 @@ function Chart() {
     // Attach variables to main function
     //@ts-ignore
     main[key] = function(_) {
-      var string = `attrs['${key}'] = _`;
+      const string = `attrs['${key}'] = _`;
       if (!arguments.length) {
         return eval(` attrs['${key}'];`);
       }
@@ -816,7 +800,7 @@ function Chart() {
 
   // Run  visual
   //@ts-ignore
-  main["render"] = function() {
+  main["render"] = () => {
     main();
     return main;
   };
